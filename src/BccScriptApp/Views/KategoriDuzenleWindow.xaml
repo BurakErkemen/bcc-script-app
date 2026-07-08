@@ -1,0 +1,62 @@
+<Window x:Class="BccScriptApp.Views.KategoriDuzenleWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:BccScriptApp.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:KategoriDuzenleViewModel}"
+        Title="Kategorileri Düzenle"
+        Width="360" Height="420"
+        MinWidth="300" MinHeight="300"
+        WindowStartupLocation="CenterOwner"
+        Topmost="True"
+        FontSize="13"
+        Background="#F4F6F8">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Kategoriler (bölümler)" FontWeight="SemiBold" Margin="0,0,0,8"/>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <ItemsControl ItemsSource="{Binding Satirlar}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:KategoriSatiri}">
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding Ad, UpdateSourceTrigger=PropertyChanged}"
+                                         Padding="6,5"/>
+                                <Button Grid.Column="1" Content="🗑" Width="30" Height="30"
+                                        Margin="6,0,0,0"
+                                        ToolTip="Kategoriyi sil (scriptler 'Kategorisiz' kalır)"
+                                        Background="#FEF2F2" BorderBrush="#FECACA"
+                                        Cursor="Hand"
+                                        Command="{Binding DataContext.SilCommand,
+                                                  RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Button Content="＋ Yeni Kategori" Padding="0,6" Margin="0,2,36,0"
+                        Background="#EFF6FF" BorderBrush="#BFDBFE" Cursor="Hand"
+                        Command="{Binding EkleCommand}"/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+            <Button Content="İptal" Width="90" Padding="0,6" Margin="0,0,8,0" IsCancel="True"/>
+            <Button Content="Kaydet" Width="90" Padding="0,6" IsDefault="True"
+                    Background="#2563EB" Foreground="White" BorderThickness="0"
+                    Click="Kaydet_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,0 +1,393 @@
+<Window x:Class="BccScriptApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:BccScriptApp.ViewModels"
+        xmlns:models="clr-namespace:BccScriptApp.Models"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
+        x:Name="Root"
+        Title="BCC Script Yöneticisi"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="CanResize"
+        Topmost="True"
+        ShowInTaskbar="True"
+        Width="340" Height="700"
+        FontSize="13"
+        Loaded="Window_Loaded">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolGorunum"/>
+        <Style x:Key="MesajButonu" TargetType="Button">
+            <Setter Property="Background" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#DDE3EA"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Kopyalandi}" Value="True">
+                    <Setter Property="Background" Value="#BBF7D0"/>
+                    <Setter Property="BorderBrush" Value="#16A34A"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="EslesmeButonu" TargetType="Button">
+            <Setter Property="Background" Value="#FFFBEB"/>
+            <Setter Property="BorderBrush" Value="#FDE68A"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Kopyalandi}" Value="True">
+                    <Setter Property="Background" Value="#BBF7D0"/>
+                    <Setter Property="BorderBrush" Value="#16A34A"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    <Grid>
+        <!-- Genişletilmiş görünüm: sağa yaslı dar panel -->
+        <Border x:Name="PanelGorunum"
+                Background="White"
+                CornerRadius="10"
+                BorderBrush="#CBD5E1"
+                BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.25"/>
+            </Border.Effect>
+            <DockPanel Margin="10">
+                <!-- Başlık çubuğu (sürüklenebilir) -->
+                <Grid DockPanel.Dock="Top" Margin="0,0,0,8"
+                      Background="Transparent"
+                      MouseLeftButtonDown="Baslik_MouseLeftButtonDown">
+                    <TextBlock Text="📋 Scriptler" FontWeight="Bold" FontSize="15"
+                               VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="＋" Width="28" Height="28" FontSize="15"
+                                ToolTip="Yeni script"
+                                Background="#EFF6FF" BorderBrush="#BFDBFE"
+                                Command="{Binding YeniScriptCommand}"/>
+                        <Button Content="—" Width="28" Height="28" Margin="6,0,0,0"
+                                ToolTip="Küçült"
+                                Background="#F1F5F9" BorderBrush="#CBD5E1"
+                                Click="Kucult_Click"/>
+                        <Button Content="✕" Width="28" Height="28" Margin="6,0,0,0"
+                                ToolTip="Kapat"
+                                Background="#FEF2F2" BorderBrush="#FECACA"
+                                Click="Kapat_Click"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Arama satırı -->
+                <Grid DockPanel.Dock="Top" Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox Padding="6,5"
+                             Text="{Binding Liste.AramaMetni, UpdateSourceTrigger=PropertyChanged}"
+                             ToolTip="Başlık, mesaj içeriği veya etikette ara"/>
+                    <ToggleButton Grid.Column="1" Content="⭐" Width="30" Margin="6,0,0,0"
+                                  ToolTip="Sadece favoriler"
+                                  IsChecked="{Binding Liste.SadeceFavoriler}"/>
+                    <Button Grid.Column="2" Content="✕" Width="30" Margin="6,0,0,0"
+                            ToolTip="Filtreleri temizle"
+                            Command="{Binding FiltreleriTemizleCommand}"/>
+                </Grid>
+
+                <!-- Bölümler: Giriş / Kapanış gibi durum seçimi -->
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                    <Button DockPanel.Dock="Right" Content="⚙" Width="28" Height="26"
+                            Margin="4,0,0,0" VerticalAlignment="Top"
+                            ToolTip="Kategorileri düzenle"
+                            Background="#F1F5F9" BorderBrush="#CBD5E1" Cursor="Hand"
+                            Command="{Binding KategorileriDuzenleCommand}"/>
+                    <Button DockPanel.Dock="Left" Content="Tümü"
+                            Padding="10,3" Margin="0,0,4,0"
+                            Cursor="Hand" FontSize="12"
+                            Command="{Binding TumKategorilerCommand}">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="#F1F5F9"/>
+                                <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Liste.SeciliKategori}" Value="{x:Null}">
+                                        <Setter Property="Background" Value="#2563EB"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="BorderBrush" Value="#2563EB"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <ListBox ItemsSource="{Binding Liste.Kategoriler}"
+                             SelectedItem="{Binding Liste.SeciliKategori}"
+                             Background="Transparent" BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel/>
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Margin" Value="0,0,4,4"/>
+                                <Setter Property="Cursor" Value="Hand"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="Cip" Background="#F1F5F9" CornerRadius="4"
+                                                    BorderBrush="#CBD5E1" BorderThickness="1"
+                                                    Padding="10,3">
+                                                <ContentPresenter/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="Cip" Property="Background" Value="#2563EB"/>
+                                                    <Setter TargetName="Cip" Property="BorderBrush" Value="#2563EB"/>
+                                                    <Setter Property="TextElement.Foreground" Value="White"/>
+                                                </Trigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Cip" Property="BorderBrush" Value="#2563EB"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Ad}" FontSize="12"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+
+                <!-- Durum -->
+                <Grid DockPanel.Dock="Bottom" Margin="0,6,0,0">
+                    <TextBlock Text="{Binding DurumMesaji}"
+                               FontSize="11" Foreground="#475569"
+                               Margin="0,0,84,0" TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center"/>
+                    <Border HorizontalAlignment="Right" VerticalAlignment="Center"
+                            Background="#2563EB" CornerRadius="4" Padding="7,2">
+                        <TextBlock Text="BFE is HERE" FontSize="10" FontWeight="Bold"
+                                   Foreground="White"/>
+                    </Border>
+                </Grid>
+
+                <!-- Yeni script ekleme modülü -->
+                <Button DockPanel.Dock="Bottom" Content="＋ Yeni Script Ekle"
+                        Margin="0,8,0,0" Padding="0,8"
+                        FontWeight="SemiBold"
+                        Background="#2563EB" Foreground="White" BorderThickness="0"
+                        Cursor="Hand"
+                        Command="{Binding YeniScriptCommand}"/>
+
+                <!-- Başlıklar: aşağı doğru uzar, sonda kaydırma -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                    <!-- Son kullanılanlar: hızlı erişim -->
+                    <StackPanel Margin="0,0,0,6">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SonKullanilanlar.Count}" Value="0">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <TextBlock Text="🕘 Son Kullanılanlar" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="#64748B" Margin="2,0,0,4"/>
+                        <ItemsControl ItemsSource="{Binding SonKullanilanlar}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type models:ScriptMaddesi}">
+                                    <Button Margin="0,0,0,4" Padding="8,5"
+                                            HorizontalContentAlignment="Stretch"
+                                            Style="{StaticResource MesajButonu}"
+                                            Cursor="Hand"
+                                            ToolTip="{Binding Metin}"
+                                            Command="{Binding DataContext.KopyalaCommand, ElementName=Root}"
+                                            CommandParameter="{Binding}">
+                                        <DockPanel>
+                                            <TextBlock DockPanel.Dock="Right" Text="📋"
+                                                       FontSize="11" Opacity="0.7"
+                                                       VerticalAlignment="Center" Margin="6,0,0,0"/>
+                                            <TextBlock Text="{Binding Metin}" FontSize="12"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                        </DockPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Separator Margin="0,2,0,0" Background="#E2E8F0"/>
+                    </StackPanel>
+
+                    <ItemsControl ItemsSource="{Binding Liste.ScriptGorunumu}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type models:Script}">
+                                <StackPanel Margin="0,0,0,6">
+                                <Grid>
+                                    <!-- Başlık satırı: tıklayınca menü sola açılır -->
+                                    <Button x:Name="BaslikSatiri"
+                                            HorizontalContentAlignment="Stretch"
+                                            Padding="6,7"
+                                            Cursor="Hand"
+                                            Background="#F8FAFC" BorderBrush="#E2E8F0"
+                                            ToolTip="Tıkla: mesajlar sola açılır"
+                                            Command="{Binding DataContext.MenuAcKapaCommand, ElementName=Root}"
+                                            CommandParameter="{Binding}">
+                                        <DockPanel>
+                                            <TextBlock DockPanel.Dock="Left" Text="◀"
+                                                       FontSize="10" Opacity="0.5"
+                                                       VerticalAlignment="Center" Margin="2,0,4,0"/>
+                                            <Button DockPanel.Dock="Left" Width="24" Height="24"
+                                                    Background="Transparent" BorderThickness="0"
+                                                    Cursor="Hand" FontSize="13"
+                                                    ToolTip="Favori"
+                                                    Command="{Binding DataContext.FavoriDegistirCommand, ElementName=Root}"
+                                                    CommandParameter="{Binding}">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Content" Value="☆"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Favori}" Value="True">
+                                                                <Setter Property="Content" Value="⭐"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                            <Button DockPanel.Dock="Right" Content="🗑" Width="24" Height="24"
+                                                    Background="Transparent" BorderThickness="0"
+                                                    Cursor="Hand" FontSize="12"
+                                                    ToolTip="Scripti sil"
+                                                    Command="{Binding DataContext.ScriptSilCommand, ElementName=Root}"
+                                                    CommandParameter="{Binding}"/>
+                                            <Button DockPanel.Dock="Right" Content="✏️" Width="24" Height="24"
+                                                    Background="Transparent" BorderThickness="0"
+                                                    Cursor="Hand" FontSize="12"
+                                                    ToolTip="Scripti düzenle"
+                                                    Command="{Binding DataContext.ScriptDuzenleCommand, ElementName=Root}"
+                                                    CommandParameter="{Binding}"/>
+                                            <TextBlock DockPanel.Dock="Right" Text="{Binding KategoriAdi}"
+                                                       FontSize="10" Opacity="0.55" VerticalAlignment="Center"
+                                                       Margin="6,0,4,0"/>
+                                            <TextBlock Text="{Binding Baslik}" FontWeight="SemiBold"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" Margin="2,0,0,0"/>
+                                        </DockPanel>
+                                    </Button>
+
+                                    <!-- Mesaj menüsü: sola doğru açılır -->
+                                    <Popup IsOpen="{Binding Acik}"
+                                           PlacementTarget="{Binding ElementName=BaslikSatiri}"
+                                           Placement="Left"
+                                           AllowsTransparency="True"
+                                           StaysOpen="True"
+                                           HorizontalOffset="-6">
+                                        <Border Background="White" CornerRadius="8"
+                                                BorderBrush="#CBD5E1" BorderThickness="1"
+                                                Padding="8" Width="300" MaxHeight="380"
+                                                Margin="8">
+                                            <Border.Effect>
+                                                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.3"/>
+                                            </Border.Effect>
+                                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                                <ItemsControl ItemsSource="{Binding Maddeler}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate DataType="{x:Type models:ScriptMaddesi}">
+                                                            <Button Margin="0,0,0,4" Padding="8,6"
+                                                                    HorizontalContentAlignment="Stretch"
+                                                                    Style="{StaticResource MesajButonu}"
+                                                                    Cursor="Hand"
+                                                                    ToolTip="Tıkla: panoya kopyala"
+                                                                    Command="{Binding DataContext.KopyalaCommand, ElementName=Root}"
+                                                                    CommandParameter="{Binding}">
+                                                                <DockPanel>
+                                                                    <TextBlock DockPanel.Dock="Right" Text="📋"
+                                                                               FontSize="12" Opacity="0.7"
+                                                                               VerticalAlignment="Center" Margin="6,0,0,0"/>
+                                                                    <TextBlock Text="{Binding Metin}"
+                                                                               TextWrapping="Wrap" MaxHeight="66"
+                                                                               TextTrimming="CharacterEllipsis"/>
+                                                                </DockPanel>
+                                                            </Button>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </ScrollViewer>
+                                        </Border>
+                                    </Popup>
+                                </Grid>
+
+                                <!-- Arama eşleşmeleri: ilgili mesajlar doğrudan burada -->
+                                <ItemsControl ItemsSource="{Binding EslesenMaddeler}" Margin="12,4,0,0">
+                                    <ItemsControl.Style>
+                                        <Style TargetType="ItemsControl">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding EslesenMaddeler.Count}" Value="0">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ItemsControl.Style>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type models:ScriptMaddesi}">
+                                            <Button Margin="0,0,0,4" Padding="8,6"
+                                                    HorizontalContentAlignment="Stretch"
+                                                    Style="{StaticResource EslesmeButonu}"
+                                                    Cursor="Hand"
+                                                    ToolTip="Tıkla: panoya kopyala"
+                                                    Command="{Binding DataContext.KopyalaCommand, ElementName=Root}"
+                                                    CommandParameter="{Binding}">
+                                                <DockPanel>
+                                                    <TextBlock DockPanel.Dock="Right" Text="📋"
+                                                               FontSize="12" Opacity="0.7"
+                                                               VerticalAlignment="Center" Margin="6,0,0,0"/>
+                                                    <TextBlock Text="{Binding Metin}"
+                                                               TextWrapping="Wrap" MaxHeight="66"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                </DockPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+
+        <!-- Kopyalama toast bildirimi -->
+        <Border IsHitTestVisible="False"
+                HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                Margin="0,0,0,90"
+                Background="#16A34A" CornerRadius="8" Padding="16,9"
+                Visibility="{Binding KopyalandiBildirimi, Converter={StaticResource BoolGorunum}}">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.35"/>
+            </Border.Effect>
+            <TextBlock Text="✓ Panoya kopyalandı" Foreground="White"
+                       FontWeight="Bold" FontSize="14"/>
+        </Border>
+
+        <!-- Küçültülmüş görünüm: baloncuk -->
+        <Border x:Name="BalonGorunum"
+                Visibility="Collapsed"
+                Background="#2563EB"
+                CornerRadius="27"
+                Cursor="Hand"
+                ToolTip="Scriptleri aç"
+                MouseLeftButtonDown="Balon_MouseLeftButtonDown">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.35"/>
+            </Border.Effect>
+            <TextBlock Text="📋" FontSize="22"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+    </Grid>
+</Window>

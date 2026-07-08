@@ -1,0 +1,94 @@
+<Window x:Class="BccScriptApp.Views.ScriptEditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:BccScriptApp.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:ScriptEditViewModel}"
+        Title="{Binding PencereBasligi}"
+        Width="540" Height="560"
+        MinWidth="440" MinHeight="420"
+        WindowStartupLocation="CenterOwner"
+        Topmost="True"
+        FontSize="13"
+        Background="#F4F6F8">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Başlık" FontWeight="SemiBold" Margin="0,0,0,4"/>
+        <TextBox Grid.Row="1" Text="{Binding Baslik, UpdateSourceTrigger=PropertyChanged}"
+                 Padding="6,4" Margin="0,0,0,10"/>
+
+        <Grid Grid.Row="2" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="Kategori" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                <ComboBox IsEditable="True"
+                          ItemsSource="{Binding Kategoriler}"
+                          DisplayMemberPath="Ad"
+                          Text="{Binding KategoriAdi, UpdateSourceTrigger=PropertyChanged}"
+                          Padding="6,4"/>
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+                <TextBlock Text="Etiketler (virgülle ayırın)" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                <TextBox Text="{Binding Etiketler, UpdateSourceTrigger=PropertyChanged}" Padding="6,4"/>
+            </StackPanel>
+        </Grid>
+
+        <CheckBox Grid.Row="3" Content="⭐ Favori" IsChecked="{Binding Favori}" Margin="0,0,0,10"/>
+
+        <TextBlock Grid.Row="4" Text="Mesajlar (her kutu ayrı kopyalanabilir bir script olur)"
+                   FontWeight="SemiBold" Margin="0,0,0,4"/>
+        <ScrollViewer Grid.Row="5" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <ItemsControl ItemsSource="{Binding Maddeler}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:MaddeDuzenleme}">
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding Metin, UpdateSourceTrigger=PropertyChanged}"
+                                         AcceptsReturn="True" TextWrapping="Wrap"
+                                         MinHeight="48" MaxHeight="120"
+                                         VerticalScrollBarVisibility="Auto"
+                                         Padding="6,4"/>
+                                <Button Grid.Column="1" Content="✕" Width="26" Height="26"
+                                        Margin="6,0,0,0" VerticalAlignment="Top"
+                                        ToolTip="Mesajı çıkar"
+                                        Background="#FEF2F2" BorderBrush="#FECACA"
+                                        Command="{Binding DataContext.MaddeSilCommand,
+                                                  RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Button Content="＋ Mesaj Ekle" Padding="0,6" Margin="0,2,32,0"
+                        Background="#EFF6FF" BorderBrush="#BFDBFE"
+                        Command="{Binding MaddeEkleCommand}"/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+            <Button Content="İptal" Width="90" Padding="0,6" Margin="0,0,8,0" IsCancel="True"/>
+            <Button Content="Kaydet" Width="90" Padding="0,6" IsDefault="True"
+                    Background="#2563EB" Foreground="White" BorderThickness="0"
+                    Click="Kaydet_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

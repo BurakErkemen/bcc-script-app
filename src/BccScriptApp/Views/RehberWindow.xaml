@@ -1,0 +1,53 @@
+<Window x:Class="BccScriptApp.Views.RehberWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Nasıl Kullanılır?"
+        Width="400" SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        Topmost="True"
+        FontSize="13"
+        Background="#F4F6F8">
+    <StackPanel Margin="20">
+        <TextBlock Text="👋 Hoş geldiniz!" FontSize="18" FontWeight="Bold" Margin="0,0,0,4"/>
+        <TextBlock Text="Hazır scriptlerinizi tek tıkla kopyalamak için 5 adım:"
+                   Foreground="#475569" Margin="0,0,0,14" TextWrapping="Wrap"/>
+
+        <StackPanel Margin="0,0,0,10" Orientation="Horizontal">
+            <TextBlock Text="1️⃣" FontSize="15" Margin="0,0,10,0"/>
+            <TextBlock TextWrapping="Wrap" Width="320" VerticalAlignment="Center">
+                <Run FontWeight="SemiBold" Text="Başlığa tıklayın"/><Run Text=" — mesajlar panelin soluna açılır."/>
+            </TextBlock>
+        </StackPanel>
+        <StackPanel Margin="0,0,0,10" Orientation="Horizontal">
+            <TextBlock Text="2️⃣" FontSize="15" Margin="0,0,10,0"/>
+            <TextBlock TextWrapping="Wrap" Width="320" VerticalAlignment="Center">
+                <Run FontWeight="SemiBold" Text="Mesaja tıklayın"/><Run Text=" — panoya kopyalanır; chat ekranına Ctrl+V ile yapıştırın."/>
+            </TextBlock>
+        </StackPanel>
+        <StackPanel Margin="0,0,0,10" Orientation="Horizontal">
+            <TextBlock Text="3️⃣" FontSize="15" Margin="0,0,10,0"/>
+            <TextBlock TextWrapping="Wrap" Width="320" VerticalAlignment="Center">
+                <Run FontWeight="SemiBold" Text="＋ Yeni Script Ekle"/><Run Text=" ile başlık açın; altına birden çok mesaj ekleyebilirsiniz. Başlık yanındaki ✏️ düzenler, 🗑 siler."/>
+            </TextBlock>
+        </StackPanel>
+        <StackPanel Margin="0,0,0,10" Orientation="Horizontal">
+            <TextBlock Text="4️⃣" FontSize="15" Margin="0,0,10,0"/>
+            <TextBlock TextWrapping="Wrap" Width="320" VerticalAlignment="Center">
+                <Run FontWeight="SemiBold" Text="Bölüm çipleri"/><Run Text=" (Giriş, Kapanış...) listeyi süzer; ⚙ ile bölümleri yönetin. Arama kutusu mesaj içinde de arar."/>
+            </TextBlock>
+        </StackPanel>
+        <StackPanel Margin="0,0,0,16" Orientation="Horizontal">
+            <TextBlock Text="5️⃣" FontSize="15" Margin="0,0,10,0"/>
+            <TextBlock TextWrapping="Wrap" Width="320" VerticalAlignment="Center">
+                <Run FontWeight="SemiBold" Text="— ile küçültün"/><Run Text=" — panel köşede baloncuğa dönüşür; tıklayınca geri açılır, sürükleyerek taşıyabilirsiniz."/>
+            </TextBlock>
+        </StackPanel>
+
+        <Button Content="Anladım, başlayalım!" Padding="0,9"
+                FontWeight="SemiBold" FontSize="14"
+                Background="#2563EB" Foreground="White" BorderThickness="0"
+                Cursor="Hand" IsDefault="True" IsCancel="True"
+                Click="Basla_Click"/>
+    </StackPanel>
+</Window>
