@@ -18,15 +18,10 @@ public partial class ScriptListViewModel : ObservableObject
     [ObservableProperty]
     private Kategori? seciliKategori;
 
-    [ObservableProperty]
-    private bool sadeceFavoriler;
-
     public ScriptListViewModel()
     {
         ScriptGorunumu = CollectionViewSource.GetDefaultView(Scriptler);
         ScriptGorunumu.Filter = FiltreUygula;
-        ScriptGorunumu.SortDescriptions.Add(
-            new SortDescription(nameof(Script.Favori), ListSortDirection.Descending));
         ScriptGorunumu.SortDescriptions.Add(
             new SortDescription(nameof(Script.Baslik), ListSortDirection.Ascending));
     }
@@ -52,16 +47,10 @@ public partial class ScriptListViewModel : ObservableObject
         }
     }
     partial void OnSeciliKategoriChanged(Kategori? value) => ScriptGorunumu.Refresh();
-    partial void OnSadeceFavorilerChanged(bool value) => ScriptGorunumu.Refresh();
 
     private bool FiltreUygula(object obj)
     {
         if (obj is not Script script)
-        {
-            return false;
-        }
-
-        if (SadeceFavoriler && !script.Favori)
         {
             return false;
         }

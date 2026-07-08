@@ -11,15 +11,12 @@ namespace BccScriptApp.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
-    private const int SonKullanilanSayisi = 5;
-
     private readonly AppDbContext _db;
     private readonly DispatcherTimer _durumZamanlayici;
     private readonly DispatcherTimer _bildirimZamanlayici;
     private ScriptMaddesi? _sonKopyalanan;
 
     public ScriptListViewModel Liste { get; }
-    public System.Collections.ObjectModel.ObservableCollection<ScriptMaddesi> SonKullanilanlar { get; } = [];
 
     [ObservableProperty]
     private string durumMesaji = "İpucu: Başlığa tıklayın, mesajlar sola açılır; mesaja tıklamak kopyalar.";
@@ -69,16 +66,6 @@ public partial class MainViewModel : ObservableObject
                      .ToList())
         {
             Liste.Scriptler.Add(script);
-        }
-
-        SonKullanilanlar.Clear();
-        foreach (var madde in Liste.Scriptler
-                     .SelectMany(s => s.Maddeler)
-                     .Where(m => m.SonKullanimTarihi is not null)
-                     .OrderByDescending(m => m.SonKullanimTarihi)
-                     .Take(SonKullanilanSayisi))
-        {
-            SonKullanilanlar.Add(madde);
         }
     }
 
@@ -131,16 +118,6 @@ public partial class MainViewModel : ObservableObject
 
         MenuleriKapat();
 
-        // Son kullanılanlar listesini güncelle ve kalıcılaştır.
-        madde.SonKullanimTarihi = DateTime.Now;
-        _db.SaveChanges();
-        SonKullanilanlar.Remove(madde);
-        SonKullanilanlar.Insert(0, madde);
-        while (SonKullanilanlar.Count > SonKullanilanSayisi)
-        {
-            SonKullanilanlar.RemoveAt(SonKullanilanlar.Count - 1);
-        }
-
         // Belirgin geri bildirim: tıklanan kutu yeşil yanar, panelde toast görünür.
         if (_sonKopyalanan is not null)
         {
@@ -170,7 +147,6 @@ public partial class MainViewModel : ObservableObject
         {
             Baslik = vm.Baslik.Trim(),
             Etiketler = vm.Etiketler.Trim(),
-            Favori = vm.Favori,
             Kategori = KategoriBulVeyaOlustur(vm.KategoriAdi),
             OlusturmaTarihi = simdi,
             GuncellemeTarihi = simdi
@@ -199,13 +175,11 @@ public partial class MainViewModel : ObservableObject
 
         script.Baslik = vm.Baslik.Trim();
         script.Etiketler = vm.Etiketler.Trim();
-        script.Favori = vm.Favori;
         script.Kategori = KategoriBulVeyaOlustur(vm.KategoriAdi);
         script.KategoriId = script.Kategori?.Id;
         script.GuncellemeTarihi = DateTime.Now;
 
         // Maddeleri baştan kur: eskiler öksüz kalınca EF tarafından silinir.
-        SonKullanilanlardanDus(script);
         script.Maddeler.Clear();
         MaddeleriAktar(vm, script);
 
@@ -233,33 +207,10 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        SonKullanilanlardanDus(script);
         _db.Scriptler.Remove(script);
         _db.SaveChanges();
         Liste.Scriptler.Remove(script);
         DurumBildir($"\"{script.Baslik}\" silindi");
-    }
-
-    private void SonKullanilanlardanDus(Script script)
-    {
-        foreach (var madde in SonKullanilanlar.Where(m => script.Maddeler.Contains(m)).ToList())
-        {
-            SonKullanilanlar.Remove(madde);
-        }
-    }
-
-    [RelayCommand]
-    private void FavoriDegistir(Script? script)
-    {
-        if (script is null)
-        {
-            return;
-        }
-
-        script.Favori = !script.Favori;
-        script.GuncellemeTarihi = DateTime.Now;
-        _db.SaveChanges();
-        Liste.ScriptGorunumu.Refresh();
     }
 
     [RelayCommand]
@@ -343,7 +294,6 @@ public partial class MainViewModel : ObservableObject
     private void FiltreleriTemizle()
     {
         Liste.SeciliKategori = null;
-        Liste.SadeceFavoriler = false;
         Liste.AramaMetni = string.Empty;
     }
 

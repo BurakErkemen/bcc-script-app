@@ -18,11 +18,18 @@ public static class DbSeeder
             db.Database.EnsureDeleted();
             db.Database.EnsureCreated();
         }
-        else if (!yeniOlusturuldu && !SutunVarMi(db, "ScriptMaddeleri", "SonKullanimTarihi"))
+        else if (!yeniOlusturuldu && SutunVarMi(db, "Scriptler", "Favori"))
         {
-            // Şema güncellemesi: mevcut veriyi koruyarak yeni sütunu ekle.
-            db.Database.ExecuteSqlRaw(
-                "ALTER TABLE \"ScriptMaddeleri\" ADD COLUMN \"SonKullanimTarihi\" TEXT NULL");
+            // Kaldırılan Favori alanı NOT NULL olduğundan eski veritabanlarında
+            // yeni kayıt eklemeyi engeller; sütunu düşür.
+            try
+            {
+                db.Database.ExecuteSqlRaw("ALTER TABLE \"Scriptler\" DROP COLUMN \"Favori\"");
+            }
+            catch
+            {
+                // Çok eski SQLite sürümü DROP COLUMN desteklemiyorsa görmezden gel.
+            }
         }
 
         if (!db.Kategoriler.Any())
@@ -35,18 +42,18 @@ public static class DbSeeder
 
             var simdi = DateTime.Now;
             db.Scriptler.AddRange(
-                YeniScript("Giriş", karsilama, "karşılama, selamlama", true, simdi,
+                YeniScript("Giriş", karsilama, "karşılama, selamlama", simdi,
                     "Merhabalar! Ben müşteri temsilcinizim. Size nasıl yardımcı olabilirim?",
                     "Tekrar merhaba! Görüşmemize kaldığımız yerden devam edebiliriz.",
                     "Hoş geldiniz! Talebinizi dinliyorum, size en kısa sürede yardımcı olacağım."),
-                YeniScript("Sorun Çözme", sorun, "özür, empati, bilgi", true, simdi,
+                YeniScript("Sorun Çözme", sorun, "özür, empati, bilgi", simdi,
                     "Yaşadığınız sorun için üzgünüm. Konuyu hemen inceliyorum, en kısa sürede çözüme ulaştıracağım.",
                     "Talebinizi daha hızlı sonuçlandırabilmem için işlem numaranızı ve kayıtlı telefon numaranızı paylaşabilir misiniz?",
                     "Kontrollerimi tamamladım, sorunun kaynağını tespit ettim. Hemen düzeltiyorum."),
-                YeniScript("Bekletme", bekletme, "bekletme, kontrol", true, simdi,
+                YeniScript("Bekletme", bekletme, "bekletme, kontrol", simdi,
                     "Konuyu kontrol edebilmem için sizi kısa bir süre bekletebilir miyim? En geç 2-3 dakika içinde döneceğim.",
                     "Beklediğiniz için teşekkür ederim. Kontrollerimi tamamladım, hemen bilgi veriyorum."),
-                YeniScript("Kapanış", kapanis, "kapanış, veda, anket", true, simdi,
+                YeniScript("Kapanış", kapanis, "kapanış, veda, anket", simdi,
                     "Yardımcı olabildiysem ne mutlu! Başka bir sorunuz yoksa görüşmeyi sonlandırıyorum. İyi günler dilerim.",
                     "Görüşme sonunda size iletilecek kısa anketi doldurursanız hizmet kalitemizi artırmamıza destek olursunuz. İyi günler!"));
         }
@@ -55,14 +62,13 @@ public static class DbSeeder
     }
 
     private static Script YeniScript(
-        string baslik, Kategori kategori, string etiketler, bool favori, DateTime tarih, params string[] mesajlar)
+        string baslik, Kategori kategori, string etiketler, DateTime tarih, params string[] mesajlar)
     {
         var script = new Script
         {
             Baslik = baslik,
             Kategori = kategori,
             Etiketler = etiketler,
-            Favori = favori,
             OlusturmaTarihi = tarih,
             GuncellemeTarihi = tarih
         };

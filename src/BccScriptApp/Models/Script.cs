@@ -8,7 +8,6 @@ public class Script : ObservableObject
 {
     private string _baslik = string.Empty;
     private string _etiketler = string.Empty;
-    private bool _favori;
     private bool _acik;
     private int? _kategoriId;
     private Kategori? _kategori;
@@ -26,12 +25,6 @@ public class Script : ObservableObject
     {
         get => _etiketler;
         set => SetProperty(ref _etiketler, value);
-    }
-
-    public bool Favori
-    {
-        get => _favori;
-        set => SetProperty(ref _favori, value);
     }
 
     public int? KategoriId

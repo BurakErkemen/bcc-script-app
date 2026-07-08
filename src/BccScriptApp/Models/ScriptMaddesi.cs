@@ -18,9 +18,6 @@ public class ScriptMaddesi : ObservableObject
         set => SetProperty(ref _metin, value);
     }
 
-    /// <summary>"Son Kullanılanlar" listesi için; mesaj her kopyalandığında güncellenir.</summary>
-    public DateTime? SonKullanimTarihi { get; set; }
-
     /// <summary>Kopyalama sonrası kısa süreli yeşil vurgu; veritabanına yazılmaz.</summary>
     [NotMapped]
     public bool Kopyalandi

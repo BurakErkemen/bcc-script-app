@@ -25,9 +25,6 @@ public partial class ScriptEditViewModel : ObservableObject
     [ObservableProperty]
     private string kategoriAdi = string.Empty;
 
-    [ObservableProperty]
-    private bool favori;
-
     public string PencereBasligi { get; }
 
     public ScriptEditViewModel(IEnumerable<Kategori> kategoriler, Script? mevcut)
@@ -40,7 +37,6 @@ public partial class ScriptEditViewModel : ObservableObject
             Baslik = mevcut.Baslik;
             Etiketler = mevcut.Etiketler;
             KategoriAdi = mevcut.Kategori?.Ad ?? string.Empty;
-            Favori = mevcut.Favori;
 
             foreach (var madde in mevcut.Maddeler.OrderBy(m => m.Sira))
             {
