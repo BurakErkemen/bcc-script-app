@@ -59,9 +59,20 @@
                     <TextBlock Text="📋 Scriptler" FontWeight="Bold" FontSize="15"
                                VerticalAlignment="Center"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="＋" Width="28" Height="28" FontSize="15"
+                        <Button Content="📤" Width="28" Height="28" FontSize="12"
+                                ToolTip="Dışa aktar: scriptleri .db dosyası olarak kaydet (ekibinle paylaş)"
+                                Background="#F0FDF4" BorderBrush="#BBF7D0"
+                                Visibility="{Binding DuzenlemeModu, Converter={StaticResource BoolGorunum}}"
+                                Command="{Binding DisaAktarCommand}"/>
+                        <Button Content="📥" Width="28" Height="28" Margin="6,0,0,0" FontSize="12"
+                                ToolTip="İçe aktar: .db dosyasından scriptleri yükle"
+                                Background="#F0FDF4" BorderBrush="#BBF7D0"
+                                Visibility="{Binding DuzenlemeModu, Converter={StaticResource BoolGorunum}}"
+                                Command="{Binding IceAktarCommand}"/>
+                        <Button Content="＋" Width="28" Height="28" Margin="6,0,0,0" FontSize="15"
                                 ToolTip="Yeni script"
                                 Background="#EFF6FF" BorderBrush="#BFDBFE"
+                                Visibility="{Binding DuzenlemeModu, Converter={StaticResource BoolGorunum}}"
                                 Command="{Binding YeniScriptCommand}"/>
                         <Button Content="—" Width="28" Height="28" Margin="6,0,0,0"
                                 ToolTip="Küçült"
@@ -95,6 +106,7 @@
                             Margin="4,0,0,0" VerticalAlignment="Top"
                             ToolTip="Kategorileri düzenle"
                             Background="#F1F5F9" BorderBrush="#CBD5E1" Cursor="Hand"
+                            Visibility="{Binding DuzenlemeModu, Converter={StaticResource BoolGorunum}}"
                             Command="{Binding KategorileriDuzenleCommand}"/>
                     <Button DockPanel.Dock="Left" Content="Tümü"
                             Padding="10,3" Margin="0,0,4,0"
@@ -165,18 +177,32 @@
                                Margin="0,0,84,0" TextTrimming="CharacterEllipsis"
                                VerticalAlignment="Center"/>
                     <Border HorizontalAlignment="Right" VerticalAlignment="Center"
-                            Background="#2563EB" CornerRadius="4" Padding="7,2">
+                            CornerRadius="4" Padding="7,2"
+                            Cursor="Hand"
+                            ToolTip="Düzenleme modunu aç/kapat"
+                            MouseLeftButtonDown="Bfe_MouseLeftButtonDown">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#2563EB"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding DuzenlemeModu}" Value="True">
+                                        <Setter Property="Background" Value="#D97706"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
                         <TextBlock Text="BFE is HERE" FontSize="10" FontWeight="Bold"
                                    Foreground="White"/>
                     </Border>
                 </Grid>
 
-                <!-- Yeni script ekleme modülü -->
+                <!-- Yeni script ekleme modülü (düzenleme modunda görünür) -->
                 <Button DockPanel.Dock="Bottom" Content="＋ Yeni Script Ekle"
                         Margin="0,8,0,0" Padding="0,8"
                         FontWeight="SemiBold"
                         Background="#2563EB" Foreground="White" BorderThickness="0"
                         Cursor="Hand"
+                        Visibility="{Binding DuzenlemeModu, Converter={StaticResource BoolGorunum}}"
                         Command="{Binding YeniScriptCommand}"/>
 
                 <!-- Başlıklar: aşağı doğru uzar, sonda kaydırma -->
@@ -205,12 +231,14 @@
                                                     Background="Transparent" BorderThickness="0"
                                                     Cursor="Hand" FontSize="12"
                                                     ToolTip="Scripti sil"
+                                                    Visibility="{Binding DataContext.DuzenlemeModu, ElementName=Root, Converter={StaticResource BoolGorunum}}"
                                                     Command="{Binding DataContext.ScriptSilCommand, ElementName=Root}"
                                                     CommandParameter="{Binding}"/>
                                             <Button DockPanel.Dock="Right" Content="✏️" Width="24" Height="24"
                                                     Background="Transparent" BorderThickness="0"
                                                     Cursor="Hand" FontSize="12"
                                                     ToolTip="Scripti düzenle"
+                                                    Visibility="{Binding DataContext.DuzenlemeModu, ElementName=Root, Converter={StaticResource BoolGorunum}}"
                                                     Command="{Binding DataContext.ScriptDuzenleCommand, ElementName=Root}"
                                                     CommandParameter="{Binding}"/>
                                             <TextBlock DockPanel.Dock="Right" Text="{Binding KategoriAdi}"

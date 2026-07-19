@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Threading;
 using BccScriptApp.Data;
@@ -6,6 +7,7 @@ using BccScriptApp.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Win32;
 
 namespace BccScriptApp.ViewModels;
 
@@ -23,6 +25,10 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private bool kopyalandiBildirimi;
+
+    /// <summary>Ekleme/çıkarma kontrollerinin görünürlüğü; BFE rozetine tıklayarak açılır.</summary>
+    [ObservableProperty]
+    private bool duzenlemeModu;
 
     public MainViewModel(AppDbContext db)
     {
@@ -211,6 +217,162 @@ public partial class MainViewModel : ObservableObject
         _db.SaveChanges();
         Liste.Scriptler.Remove(script);
         DurumBildir($"\"{script.Baslik}\" silindi");
+    }
+
+    [RelayCommand]
+    private void DisaAktar()
+    {
+        var dlg = new SaveFileDialog
+        {
+            FileName = "bcc-scriptler.db",
+            Filter = "SQLite Veritabanı (*.db)|*.db|Tüm Dosyalar (*.*)|*.*",
+            Title = "Scriptleri Dışa Aktar"
+        };
+
+        if (dlg.ShowDialog() != true)
+        {
+            return;
+        }
+
+        try
+        {
+            // VACUUM INTO hedef dosya varsa hata verir; önce temizle.
+            if (File.Exists(dlg.FileName))
+            {
+                File.Delete(dlg.FileName);
+            }
+
+            // VACUUM INTO parametre almaz; tek tırnaklar kaçırılarak yol gömülür.
+            var yol = dlg.FileName.Replace("'", "''");
+#pragma warning disable EF1002
+            _db.Database.ExecuteSqlRaw($"VACUUM INTO '{yol}'");
+#pragma warning restore EF1002
+            DurumBildir($"Scriptler dışa aktarıldı: {Path.GetFileName(dlg.FileName)} ✓");
+        }
+        catch (Exception hata)
+        {
+            MessageBox.Show($"Dışa aktarma başarısız oldu:\n{hata.Message}",
+                "Dışa Aktar", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand]
+    private void IceAktar()
+    {
+        var dlg = new OpenFileDialog
+        {
+            Filter = "SQLite Veritabanı (*.db;*.sqlite)|*.db;*.sqlite|Tüm Dosyalar (*.*)|*.*",
+            Title = "Scriptleri İçe Aktar"
+        };
+
+        if (dlg.ShowDialog() != true)
+        {
+            return;
+        }
+
+        var secim = MessageBox.Show(
+            "Dosyadaki scriptler mevcut scriptlere EKLENSİN mi?\n\n" +
+            "Evet — Mevcutlar korunur, dosyadakiler eklenir (aynı başlıklar atlanır).\n" +
+            "Hayır — Mevcut TÜM scriptler silinir, yalnızca dosyadakiler kalır.",
+            "İçe Aktar",
+            MessageBoxButton.YesNoCancel,
+            MessageBoxImage.Question);
+
+        if (secim == MessageBoxResult.Cancel)
+        {
+            return;
+        }
+
+        try
+        {
+            List<Script> gelenler;
+            using (var kaynak = new AppDbContext(dlg.FileName))
+            {
+                gelenler = kaynak.Scriptler
+                    .Include(s => s.Kategori)
+                    .Include(s => s.Maddeler.OrderBy(m => m.Sira))
+                    .ToList();
+            }
+
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools(); // dosya kilitli kalmasın
+
+            if (secim == MessageBoxResult.No)
+            {
+                Liste.SeciliKategori = null;
+                _db.Scriptler.RemoveRange(_db.Scriptler);
+                _db.Kategoriler.RemoveRange(_db.Kategoriler);
+                _db.SaveChanges();
+            }
+
+            // Kategori eşlemesi: ada göre bul, yoksa oluştur.
+            var kategoriler = _db.Kategoriler.ToList()
+                .ToDictionary(k => k.Ad.Trim(), k => k, StringComparer.CurrentCultureIgnoreCase);
+            var mevcutBasliklar = new HashSet<string>(
+                _db.Scriptler.Select(s => s.Baslik).ToList(), StringComparer.CurrentCultureIgnoreCase);
+
+            var eklenen = 0;
+            var atlanan = 0;
+            var simdi = DateTime.Now;
+
+            foreach (var gelen in gelenler)
+            {
+                if (!mevcutBasliklar.Add(gelen.Baslik.Trim()))
+                {
+                    atlanan++;
+                    continue;
+                }
+
+                Kategori? kategori = null;
+                var kategoriAdi = gelen.Kategori?.Ad.Trim();
+                if (!string.IsNullOrEmpty(kategoriAdi) && !kategoriler.TryGetValue(kategoriAdi, out kategori))
+                {
+                    kategori = new Kategori { Ad = kategoriAdi };
+                    kategoriler[kategoriAdi] = kategori;
+                }
+
+                var yeni = new Script
+                {
+                    Baslik = gelen.Baslik.Trim(),
+                    Etiketler = gelen.Etiketler,
+                    Kategori = kategori,
+                    OlusturmaTarihi = simdi,
+                    GuncellemeTarihi = simdi
+                };
+                foreach (var madde in gelen.Maddeler)
+                {
+                    yeni.Maddeler.Add(new ScriptMaddesi { Metin = madde.Metin, Sira = madde.Sira });
+                }
+
+                _db.Scriptler.Add(yeni);
+                eklenen++;
+            }
+
+            _db.SaveChanges();
+            VerileriYukle();
+
+            var mesaj = $"{eklenen} script içe aktarıldı";
+            if (atlanan > 0)
+            {
+                mesaj += $", {atlanan} aynı başlık atlandı";
+            }
+
+            DurumBildir($"{mesaj} ✓");
+        }
+        catch (Exception hata)
+        {
+            MessageBox.Show(
+                $"İçe aktarma başarısız oldu. Dosya geçerli bir script veritabanı olmayabilir.\n\nAyrıntı: {hata.Message}",
+                "İçe Aktar", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand]
+    private void DuzenlemeModuDegistir()
+    {
+        DuzenlemeModu = !DuzenlemeModu;
+        DurumBildir(DuzenlemeModu
+            ? "Düzenleme modu açıldı: ekleme/çıkarma kontrolleri görünür"
+            : "Düzenleme modu kapatıldı");
     }
 
     [RelayCommand]

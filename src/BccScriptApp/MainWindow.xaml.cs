@@ -151,6 +151,14 @@ public partial class MainWindow : Window
 
     private void Kapat_Click(object sender, RoutedEventArgs e) => Close();
 
+    private void Bfe_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (DataContext is ViewModels.MainViewModel vm)
+        {
+            vm.DuzenlemeModuDegistirCommand.Execute(null);
+        }
+    }
+
     private void Baslik_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (e.ButtonState == MouseButtonState.Pressed)

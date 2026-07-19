@@ -6,6 +6,18 @@ namespace BccScriptApp.Data;
 
 public class AppDbContext : DbContext
 {
+    private readonly string _dbYolu;
+
+    public AppDbContext() : this(DbPath)
+    {
+    }
+
+    /// <summary>İçe/dışa aktarma gibi işlemlerde farklı bir veritabanı dosyası açar.</summary>
+    public AppDbContext(string dbYolu)
+    {
+        _dbYolu = dbYolu;
+    }
+
     public DbSet<Script> Scriptler => Set<Script>();
     public DbSet<ScriptMaddesi> ScriptMaddeleri => Set<ScriptMaddesi>();
     public DbSet<Kategori> Kategoriler => Set<Kategori>();
@@ -23,7 +35,7 @@ public class AppDbContext : DbContext
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlite($"Data Source={DbPath}");
+        => optionsBuilder.UseSqlite($"Data Source={_dbYolu}");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
